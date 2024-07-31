@@ -9,7 +9,7 @@ const SAMPLE_API_RESPONSE = {
   current_weather: {
     temperature: 30.7,
     windspeed: 15.3,
-    winddirection: 27,
+    winddirection: 27, 
     weathercode: 0,
     is_day: 1,
     time: '2023-05-13T18:00'

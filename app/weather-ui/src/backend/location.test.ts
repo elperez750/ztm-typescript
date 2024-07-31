@@ -1,3 +1,11 @@
+import axios from "axios";
+import MockAdapter from "axios-mock-adapter";
+import  { fetchLocationData } from "./location";
+import { it } from "node:test";
+const GEOCODE_API_KEY = "6682f13e10924986914039syu03716d";
+
+
+
 const SAMPLE_API_RESPONSE = [
   {
     place_id: 287781008,
@@ -28,3 +36,25 @@ const SAMPLE_API_RESPONSE = [
     importance: 0.8181396344174214
   },
 ];
+
+
+it("Should conver API Response",  async () => {
+  const httpClient = new MockAdapter(axios);
+  const GEOCODE_API_URL = "https://geocode.maps.co/search";
+  httpClient.onGet(GEOCODE_API_URL, { params: {q: "test"}}).reply(200, SAMPLE_API_RESPONSE)
+
+
+
+  await fetchLocationData(axios, GEOCODE_API_URL, "test", GEOCODE_API_KEY);
+});
+
+
+it("throws error when response is not 200",  async () => {
+  const httpClient = new MockAdapter(axios);
+  const GEOCODE_API_URL = "https://geocode.maps.co/search";
+  httpClient.onGet(GEOCODE_API_URL, { params: {q: "test"}}).reply(400, SAMPLE_API_RESPONSE)
+
+
+
+});
+

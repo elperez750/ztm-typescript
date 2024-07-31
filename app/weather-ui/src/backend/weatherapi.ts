@@ -1,3 +1,7 @@
+import type { AxiosStatic } from "axios";
+import { z } from "zod";
+
+// Mapping weather codes to their descriptions
 const weatherCodes: Record<number, string> = {
   0: "Clear sky",
   1: "Mainly clear",
@@ -29,3 +33,93 @@ const weatherCodes: Record<number, string> = {
   99: "Thunderstorm with heavy hail",
 };
 
+export const currentWeatherApiResponseSchema = z.object({
+  current_weather: z.object({
+    temperature: z.number(),
+    windspeed: z.number(),
+    winddirection: z.number(),
+    weathercode: z.number(),
+    is_day: z.number(),
+    time: z.string(),
+  }),
+  hourly_units: z.object({
+    temperature_2m: z.string(),
+  }),
+  hourly: z.object({
+    temperature_2m: z.array(z.number()),
+  }),
+});
+
+export type CurrentWeatherApiResponse = z.infer<
+  typeof currentWeatherApiResponseSchema
+>;
+
+// Interfaces for temperature and wind
+export interface Temperature {
+  value: number;
+  unit: string;
+}
+
+// CurrentWeather class
+export class CurrentWeather {
+  temperature: Temperature;
+  weathercode: number;
+  is_day: boolean;
+  time: string;
+  hourlyTemp: number[];
+
+  constructor(apiResponse: CurrentWeatherApiResponse) {
+    this.temperature = {
+      value: apiResponse.current_weather.temperature,
+      unit: apiResponse.hourly_units.temperature_2m,
+    };
+    this.weathercode = apiResponse.current_weather.weathercode;
+    this.is_day = apiResponse.current_weather.is_day === 1;
+    this.time = apiResponse.current_weather.time;
+    this.hourlyTemp = apiResponse.hourly.temperature_2m;
+  }
+
+  condition(): string {
+    return weatherCodes[this.weathercode];
+  }
+  lowTemp(): number {
+    return this.hourlyTemp.reduce((a, b) => Math.min(a, b));
+  }
+
+  highTemp(): number {
+    return this.hourlyTemp.reduce((a, b) => Math.max(a, b));
+  }
+}
+
+// Function to fetch weather data
+export async function fetchWeatherData(
+  axios: AxiosStatic,
+  apiUrl: string,
+  lat: string,
+  lon: string
+): Promise<CurrentWeather> {
+  const options = {
+    method: "GET",
+    url: apiUrl,
+    params: {
+      latitude: lat,
+      longitude: lon,
+      hourly: "temperature_2m",
+      temperature_unit: "fahrenheit",
+      current_weather: true,
+      forecast_days: 1,
+    },
+  };
+
+  const response = await axios.request(options);
+  if (response.status === 200) {
+    try {
+      const res = currentWeatherApiResponseSchema.parse(response.data);
+      return new CurrentWeather(res);
+    } catch (err) {
+      throw new Error("Recieved invalid API Response");
+    }
+  } else {
+    throw new Error("Failed to fetch weather data");
+  }
+}

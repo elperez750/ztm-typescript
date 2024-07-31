@@ -63,6 +63,7 @@
     "dotenv": "^16.4.5",
     "fastify": "^4.17.0",
     "nunjucks": "^3.2.4",
-    "zod": "^3.21.4"
+    "zod": "^3.21.4",
+    "ztm-typescript-submit-form": "link:"
   }
 }
